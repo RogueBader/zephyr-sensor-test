@@ -1,0 +1,5 @@
+projects:
+  - name: sensor_xyz
+    path: modules/sensor_xyz
+    url: https://github.com/RogueBader/sensor_xyz
+    revision: main
