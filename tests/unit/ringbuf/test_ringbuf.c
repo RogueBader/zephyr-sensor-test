@@ -3,6 +3,11 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 
+#define STACK_SIZE 1024
+#define PRIORITY 5
+
+static ringbuf_t *rb;
+
 ZTEST(driver_api, sensor_basic_functionality)
 {
     const struct device *dev = device_get_binding("FAKE_XYZ");
@@ -107,6 +112,73 @@ ZTEST(ringbuf, bulk_drain)
     for (int i = 0; i < 5; i++) {
         zassert_equal(out[i].t_ms, i, "Order mismatch");
     }
+
+    rb_destroy(rb);
+}
+
+static void producer_thread(void *p1, void *p2, void *p3)
+{
+    ARG_UNUSED(p1);
+    ARG_UNUSED(p2);
+    ARG_UNUSED(p3);
+
+    struct accel_sample s;
+
+    for (int i = 0; i < 100; i++) {
+        s.t_ms = i;
+        s.ax_ms2 = i;
+        s.ay_ms2 = i;
+        s.az_ms2 = i;
+
+        rb_push(rb, &s);
+        k_usleep(100); // small delay to simulate real production
+    }
+}
+
+static void consumer_thread(void *p1, void *p2, void *p3)
+{
+    ARG_UNUSED(p1);
+    ARG_UNUSED(p2);
+    ARG_UNUSED(p3);
+
+    struct accel_sample out;
+    int last = -1;
+
+    for (int i = 0; i < 100; i++) {
+        if (rb_pop(rb, &out)) {
+            /* Ensure monotonic increasing order */
+            zassert_true(out.t_ms > last, "Out-of-order data");
+            last = out.t_ms;
+        }
+        k_usleep(150);
+    }
+}
+
+ZTEST(ringbuf, spsc_semantics)
+{
+    rb = rb_create(16);
+    zassert_not_null(rb, "Failed to create buffer");
+
+    k_tid_t prod = k_thread_create(
+        &(struct k_thread){},
+        K_THREAD_STACK_DEFINE(prod_stack, STACK_SIZE),
+        STACK_SIZE,
+        producer_thread,
+        NULL, NULL, NULL,
+        PRIORITY, 0, K_NO_WAIT
+    );
+
+    k_tid_t cons = k_thread_create(
+        &(struct k_thread){},
+        K_THREAD_STACK_DEFINE(cons_stack, STACK_SIZE),
+        STACK_SIZE,
+        consumer_thread,
+        NULL, NULL, NULL,
+        PRIORITY, 0, K_NO_WAIT
+    );
+
+    k_thread_join(prod, K_FOREVER);
+    k_thread_join(cons, K_FOREVER);
 
     rb_destroy(rb);
 }
