@@ -1,5 +1,34 @@
 #include <zephyr/ztest.h>
 #include "ringbuf.h"
+#include <zephyr/device.h>
+#include <zephyr/drivers/sensor.h>
+
+ZTEST(driver_api, sensor_basic_functionality)
+{
+    const struct device *dev = device_get_binding("FAKE_XYZ");
+    zassert_not_null(dev, "Failed to get device");
+
+    struct sensor_value xyz[3];
+
+    for (int i = 0; i < 20; i++) {
+
+        zassert_equal(sensor_sample_fetch(dev), 0, "Sample fetch failed");
+
+        zassert_equal(
+            sensor_channel_get(dev, SENSOR_CHAN_ACCEL_XYZ, xyz),
+            0,
+            "Channel get failed"
+        );
+
+        /* Check values are finite */
+        for (int j = 0; j < 3; j++) {
+            zassert_false((xyz[j].val1 == 0 && xyz[j].val2 == 0),
+                          "Invalid sensor value");
+        }
+    }
+}
+
+ZTEST_SUITE(driver_api, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(ringbuf, push_pop_basic)
 {
