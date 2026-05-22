@@ -1,0 +1,5 @@
+west:
+  command: C:\Users\Rogue\AppData\Local\Programs\Python\Python312\Lib\site-packages\west\__main__.py
+    build -t pristine
+  topdir: C:\Users\Rogue\Documents\projects\zephyr-workspace
+  version: 1.5.0

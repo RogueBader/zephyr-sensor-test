@@ -38,10 +38,10 @@ jobs:
 
       - name: Build unit tests (ring buffer)
         run: |
-          west build -b native_posix tests/unit/ringbuf --build-dir build_unit
+          west build -b native_sim tests/unit/ringbuf --build-dir build_unit
           west build -t run --build-dir build_unit
 
       - name: Build integration tests (driver API)
         run: |
-          west build -b native_posix tests/integration/driver_api --build-dir build_integration
+          west build -b native_sim tests/integration/driver_api --build-dir build_integration
           west build -t run --build-dir build_integration
