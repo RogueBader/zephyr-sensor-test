@@ -1,5 +1,15 @@
-projects:
-  - name: sensor_xyz
-    path: modules/sensor_xyz
-    url: https://github.com/RogueBader/sensor_xyz
-    revision: main
+manifest:
+  version: 0.13
+
+  projects:
+    - name: zephyr
+      url: https://github.com/zephyrproject-rtos/zephyr
+      revision: main
+
+    - name: sensor-xyz
+      path: modules/sensor_xyz
+      url: https://github.com/RogueBader/sensor-xyz
+      revision: main
+
+  self:
+    path: zephyr-sensor-test
