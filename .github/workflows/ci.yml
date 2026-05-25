@@ -8,32 +8,22 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
 
+    # ✅ Use official Zephyr container (important)
+    container:
+      image: ghcr.io/zephyrproject-rtos/ci:latest
+
     steps:
-      - name: Checkout repo
+      # ✅ Checkout your repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      # ✅ Build unit test (no west init/update needed)
+      - name: Build unit test (ring buffer)
         run: |
-          pip install west
-          sudo apt update
-          sudo apt install -y ninja-build cmake gcc gperf ccache python3-pip
-
-      - name: Initialize west
-        run: |
-          west init workspace
-          cd workspace
-          west update
-
-      - name: Copy project into workspace
-        run: |
-          cp -r app tests CMakeLists.txt workspace/
-
-      - name: Build unit test
-        run: |
-          cd workspace
           west build -b native_sim tests/unit/ringbuf --build-dir build_test
 
-      - name: Run test
+      # ✅ Run test
+      - name: Run unit test
         run: |
-          cd workspace/build_test
+          cd build_test
           ninja run
