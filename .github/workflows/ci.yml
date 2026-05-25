@@ -26,7 +26,7 @@ jobs:
 
       - name: Copy project into workspace
         run: |
-          cp -r * workspace/
+          cp -r app tests CMakeLists.txt workspace/
 
       - name: Build unit test
         run: |
