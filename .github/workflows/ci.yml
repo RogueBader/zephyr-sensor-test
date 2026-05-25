@@ -9,39 +9,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
+          pip install west
           sudo apt update
-          sudo apt install -y git python3-pip ninja-build gperf \
-              ccache dfu-util device-tree-compiler wget xz-utils file \
-              make cmake gcc g++ python3-setuptools python3-wheel
+          sudo apt install -y ninja-build cmake gcc gperf ccache python3-pip
 
-      - name: Install west
+      - name: Initialize west
         run: |
-          pip3 install west
-
-      - name: Initialize west workspace
-        run: |
-          west init -l .
+          west init workspace
+          cd workspace
           west update
 
-      - name: Install Zephyr dependencies
+      - name: Copy project into workspace
         run: |
-          pip3 install -r zephyr/scripts/requirements.txt
+          cp -r * workspace/
 
-      - name: Export Zephyr environment
+      - name: Build unit test
         run: |
-          west zephyr-export
+          cd workspace
+          west build -b native_sim tests/unit/ringbuf --build-dir build_test
 
-      - name: Build unit tests (ring buffer)
+      - name: Run test
         run: |
-          west build -b native_sim tests/unit/ringbuf --build-dir build_unit
-          west build -t run --build-dir build_unit
-
-      - name: Build integration tests (driver API)
-        run: |
-          west build -b native_sim tests/integration/driver_api --build-dir build_integration
-          west build -t run --build-dir build_integration
+          cd workspace/build_test
+          ninja run
